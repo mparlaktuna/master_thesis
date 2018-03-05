@@ -10,9 +10,9 @@ class DataLoader(object):
     "loads datasets"
 
     def __init__(self):
-        self._dataSetLocations = {"cifar10":"data/cifar10_data/",
-                                  "mnist": "data/mnist_data/",
-                                  "emnist": "data/emnist_data/"}
+        self._dataSetLocations = {"cifar10":"~/tf_workspace/data/cifar10_data/",
+                                  "mnist": "~/tf.workspace/data/mnist_data/",
+                                  "emnist": "~/tf_workspace/data/emnist_data/"}
         self.logger = logging.getLogger('logger_master')
         self.dataset_directory = ""
         self.data = {}
