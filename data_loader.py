@@ -10,9 +10,9 @@ class DataLoader(object):
     "loads datasets"
 
     def __init__(self):
-        self._dataSetLocations = {"cifar10":"~/tf_workspace/data/cifar10_data/",
-                                  "mnist": "~/tf.workspace/data/mnist_data/",
-                                  "emnist": "~/tf_workspace/data/emnist_data/"}
+        self._dataSetLocations = {"cifar10":"/home/mustafa/tf_workspace/data/cifar10_data/",
+                                  "mnist": "/home/mustafa/tf_workspace/data/mnist_data/",
+                                  "emnist": "/home/mustafa/tf_workspace/data/emnist_data/"}
         self.logger = logging.getLogger('logger_master')
         self.dataset_directory = ""
         self.data = {}
@@ -28,7 +28,7 @@ class DataLoader(object):
         """loads the data set and returns dataset"""
         if dataset_name in self._dataSetLocations:
             self.logger.debug("loading all data: " + dataset_name)
-            self.dataset_directory = os.path.join(os.path.dirname(__file__), self._dataSetLocations[dataset_name])
+            self.dataset_directory = self._dataSetLocations[dataset_name]
             self.logger.debug("loading from directory: " + self.dataset_directory)
 
             if file_name == "mnist_raw":
