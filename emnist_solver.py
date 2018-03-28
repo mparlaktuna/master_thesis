@@ -8,9 +8,10 @@ import os, sys
 from six.moves import xrange
 from tensorflow.python import debug as tf_debug
 import pdb
+import deeplda_mnist
 from scipy.sparse.linalg import svds
 import pickle
-
+from random import randint
 
 number_to_class = "0 1 2 3 4 5 6 7 8 9 " \
                   "a b c d e f g h i j k l m n o p q r s t u v w x y z " \
@@ -1792,6 +1793,164 @@ class EmnistSolver(object):
                     # print(batch_ys)
                     # print(sess.run(normalized, feed_dict={x: batch_xs, p1: pro1, p2: pro2, y_: batch_ys, keep_prob: 0.5}))
                     #sess.run(tf_training_model, feed_dict={x: batch_xs, y_: batch_ys, keep_prob: 0.5})
+
+                # print('test accuracy %g' % tf_accuracy_model.eval(feed_dict={
+                #     x: input_test, y_: label_test, keep_prob: 1.0}))
+
+    def train_lda(self):
+        def weight_variable(shape, name=None):
+            initial = tf.truncated_normal(shape, stddev=0.1)
+            return tf.Variable(initial, name=name)
+
+        def bias_variable(shape, name=None):
+            initial = tf.constant(0.1, shape=shape)
+            return tf.Variable(initial, name=name)
+
+        weights = {
+            "w1": tf.Variable(tf.random_normal([3, 3, 1, 64])),
+            "w2": tf.Variable(tf.random_normal([3, 3, 64, 64])),
+            "w3": tf.Variable(tf.random_normal([3, 3, 64, 96])),
+            "w4": tf.Variable(tf.random_normal([3, 3, 96, 96])),
+            "w5": tf.Variable(tf.random_normal([3, 3, 96, 256])),
+            "w6": tf.Variable(tf.random_normal([3, 3, 256, 256])),
+            "w7": tf.Variable(tf.random_normal([1, 1, 256, 10])),
+        }
+        fcc_weights = {
+        'W_fc1' : weight_variable([7 * 7 * 10, 1024]),
+        'b_fc1' : bias_variable([1024]),
+        'W_fc2' : weight_variable([1024, 10]),
+        'b_fc2' : bias_variable([10])
+        }
+
+        feature_size = 490
+        self.logger.info("Creating tf training model with angle separation")
+        x = tf.placeholder(tf.float32, [None, 784], "x")
+        keep_prob = tf.placeholder(tf.float32)
+        y_ = tf.placeholder(tf.float32, [None, 10])
+        o_u = tf.placeholder(tf.float32, [feature_size, feature_size])
+
+        [y_conv, features] = deeplda_mnist.lda_create_network(x, weights, fcc_weights, keep_prob)
+
+
+        # #regular training
+        cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=y_, logits=y_conv))
+
+        #regular training
+        #tf_training_model = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+
+        #only fcc training
+        tf_training_model = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy, var_list=[fcc_weights["W_fc1"], fcc_weights["b_fc1"], fcc_weights["W_fc2"], fcc_weights["b_fc2"]])
+
+        tf_test_model = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
+        tf_accuracy_model = tf.reduce_mean(tf.cast(tf_test_model, tf.float32))
+
+        flat_features = tf.reshape(features, [-1, feature_size])
+        m0, m1 = tf.split(flat_features, 2)
+        #
+        # s, u, v = tf.svd(tf.transpose(tf.reshape(flat_features, [feature_size, feature_size])), full_matrices=True, compute_uv=True,
+        #                     name="svd")
+        s1, u1, v1 = tf.svd(tf.transpose(tf.reshape(m0, [feature_size, feature_size])), full_matrices=True,
+                         compute_uv=True,
+                         name="svd")
+
+        s2, u2, v2 = tf.svd(tf.transpose(tf.reshape(m1, [feature_size, feature_size])), full_matrices=True,
+                         compute_uv=True,
+                         name="svd")
+
+        p_diag = tf.diag_part(tf.matmul(tf.transpose(u1), u2))
+        angles = feature_size - tf.reduce_sum(tf.square(tf.sin(tf.acos(p_diag))))
+        train_angles = tf.train.AdamOptimizer(1e-4).minimize(angles)
+        #
+
+        input_set = np.concatenate([self.image_clustered_with_gt[number_to_class[data]] for data in range(10)], axis=0)
+        labels = [np.zeros((2400, 10)) for i in range(10)]
+        for i in range(10):
+            labels[i][:, i][:] = 1
+        label_set = np.concatenate(labels, axis=0)
+
+        input_test = np.concatenate([self.clustered_test[data] for data in range(10)], axis=0)
+        label_test_list = [np.zeros((len(self.clustered_test[0]), 10)) for i in range(10)]
+        for i in range(10):
+            label_test_list[i][:, i] = 1
+        label_test = np.concatenate(label_test_list, axis=0)
+
+        # first_label = np.stack((np.ones(len(first_input)), np.zeros(len(first_input))), axis=1)
+        # second_label = np.stack((np.zeros(len(second_input)), np.ones(len(second_input))), axis=1)
+        # label_set = np.concatenate((first_label, second_label), axis=0)
+        #
+        # input_test = np.concatenate((first_test, second_test))
+        # first_test = np.stack((np.ones(len(first_test)), np.zeros(len(first_test))), axis=1)
+        # second_test = np.stack((np.zeros(len(second_test)), np.ones(len(second_test))), axis=1)
+        # label_test = np.concatenate((first_test, second_test), axis=0)
+        #
+        dataset = tf.data.Dataset.from_tensor_slices((input_set, label_set))
+        dataset = dataset.repeat(200)
+        dataset = dataset.shuffle(buffer_size=10000)
+        batched_dataset = dataset.batch(60)
+        iterator = batched_dataset.make_initializable_iterator()
+        next_element = iterator.get_next()
+
+        with tf.Session() as sess:
+
+            sess.run(tf.global_variables_initializer())
+            sess.run(iterator.initializer)
+            self.logger.info("Training start")
+
+            #train conv network
+            for n in [1,2,1,3,1,2,4,1,2]:
+                k = 0
+
+                for m in range(10):
+                    first_index = 0
+                    # first_index = randint(0, 10)
+                    #
+                    # second_index = randint(0, 10)
+                    # while second_index == first_index:
+                    #     second_index = randint(0, 10)
+                    #
+                    second_index = n
+                    index_list = [0,490,980,1470,1960]
+                    sess.run(train_angles, feed_dict={x: np.concatenate((self.image_clustered_with_gt[number_to_class[first_index]][index_list[k]:index_list[k+1]],
+                                                                                 self.image_clustered_with_gt[
+                                                                                     number_to_class[second_index]][index_list[k]:index_list[k+1]]))})
+                    angle_value = sess.run(angles, feed_dict={x: np.concatenate((self.image_clustered_with_gt[number_to_class[first_index]][index_list[k]:index_list[k+1]],
+                                                                                 self.image_clustered_with_gt[
+                                                                                     number_to_class[second_index]][index_list[k]:index_list[k+1]]))})
+                    k += 1
+                    if k==4:
+                        k=0
+
+                    print("epoch {}, first index: {}, second index: {}, angle: {}".format(m, first_index, second_index, angle_value))
+
+            for m in range(1, 200):
+                for _ in range(400):
+                    batch_xs, batch_ys = sess.run(next_element)
+                    sess.run(tf_training_model, feed_dict={x: batch_xs, y_: batch_ys, keep_prob: 1.0})
+
+                accuracy_value = sess.run(tf_accuracy_model, feed_dict={x: input_test, y_: label_test, keep_prob: 1.0})
+                print("Epoch: {},  accuracy: {} ".format(m,accuracy_value))
+                    # u1_values = sess.run(u1, feed_dict={x: self.image_clustered_with_gt[number_to_class[index1]],
+                    #                                            x2: self.image_clustered_with_gt[
+                    #                                                number_to_class[index1]]})
+                    #
+                    # u2_values = sess.run(u2, feed_dict={x: self.image_clustered_with_gt[number_to_class[index1]],
+                    #                                     x2: self.image_clustered_with_gt[
+                    #                                         number_to_class[index1]]})
+                    #
+                    # print(u1_values.shape)
+                    # print(u2_values.shape)
+                    # for i in range(0, 10):
+                    # sess.run(train_angles,
+                    #          feed_dict={x: self.image_clustered_with_gt[number_to_class[0]],
+                    #                     x2: self.image_clustered_with_gt[number_to_class[1]]})
+                    # angle_values = sess.run(angles,
+                    #                         feed_dict={x: self.image_clustered_with_gt[number_to_class[0]],
+                    #                                    x2: self.image_clustered_with_gt[number_to_class[1]]})
+                    # print(angle_values)
+
+                    # print(batch_ys)
+                    # print(sess.run(normalized, feed_dict={x: batch_xs, p1: pro1, p2: pro2, y_: batch_ys, keep_prob: 0.5}))
+                    # sess.run(tf_training_model, feed_dict={x: batch_xs, y_: batch_ys, keep_prob: 0.5})
 
                 # print('test accuracy %g' % tf_accuracy_model.eval(feed_dict={
                 #     x: input_test, y_: label_test, keep_prob: 1.0}))

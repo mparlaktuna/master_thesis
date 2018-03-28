@@ -26,12 +26,12 @@ def main():
 
     try:
         #mnist test
-        mnist = MnistSolver()
-        mnist.loadTrainingData()
-        mnist.loadTestData()
-        mnist.cluster_training_with_gound_truth()
-        mnist.cluster_test_with_ground_truth()
-        mnist.train_lda_with_mid_angle_separation()
+        # mnist = MnistSolver()
+        # mnist.loadTrainingData()
+        # mnist.loadTestData()
+        # mnist.cluster_training_with_gound_truth()
+        # mnist.cluster_test_with_ground_truth()
+        # mnist.train_lda_with_mid_angle_separation()
         # #mnist.test_with_norm_only()
         # mnist.test_classes_with_tf_norm()
 
@@ -41,17 +41,19 @@ def main():
         # cifar.test_images_vectorize()
         # cifar.cluster_training_with_ground_truth()
         # cifar.cluster_test_with_ground_truth()
+        # cifar.train_alexnet()
         # # cifar.test_two_classes_with_tf_norm_separate()
         # #cifar.test_two_classes_with_alexnet_norm()
         # #cifar.test_classes_with_alexnet_norm()
         # cifar.test_classes_with_alexnet_norm2()
 
         #emnist run
-        # emnist = EmnistSolver("emnist_balanced")
-        # emnist.load_training_data()
-        # emnist.load_test_data()
-        # emnist.cluster_training_with_gound_truth()
-        # emnist.cluster_test_with_ground_truth()
+        emnist = EmnistSolver("emnist_balanced")
+        emnist.load_training_data()
+        emnist.load_test_data()
+        emnist.cluster_training_with_gound_truth()
+        emnist.cluster_test_with_ground_truth()
+        emnist.train_lda()
         # emnist.train_tf_with_mid_angle_separation()
         # emnist.test_classes_with_tf_norm_separate2()
         #emnist.test_two_classes_with_separate_norm()
@@ -61,12 +63,6 @@ def main():
         #emnist.test_classes_with_tf_norm()
         # emnist.test_classes_with_alexnet_norm()
         # emnist.calculate_angle_between_feature_vector_svd()
-
-
-
-
-
-
 
     except KeyError:
         logger.debug("Unable to load dataset")

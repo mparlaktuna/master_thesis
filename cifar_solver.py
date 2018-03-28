@@ -3,8 +3,8 @@ import logging
 from data_loader import DataLoader
 import numpy as np
 import tools
-#from alexnet_samples.alexnet2 import *
-from alexnet_samples.alexnet import *
+from alexnet_samples.alexnet2 import *
+#from alexnet_samples.alexnet import *
 
 class CifarSolver(object):
     """cifar solver"""
@@ -29,10 +29,14 @@ class CifarSolver(object):
 
     def loadTrainingData(self, size=None):
         self.training_images, self.training_labels = self.dataLoader.getTrainingData(size)
+        # for i in range(len(self.training_images)):
+        #     self.training_images[i] = self.training_images[i] /255.0
         self.logger.info("Using {} training images".format(len(self.training_images)))
 
     def loadTestData(self, size=None):
         self.test_images, self.test_labels = self.dataLoader.getTestData(size)
+        # for i in range(len(self.test_images)):
+        #     self.test_images[i] = self.test_images[i] / 255.0
         self.logger.info("Using {} test images".format(len(self.test_images)))
 
     def test_images_vectorize(self, hsv=False):
@@ -66,7 +70,8 @@ class CifarSolver(object):
                 temp2 = tools.convert_rgb_to_hsv_onlyh(temp, sine=True)
                 self.image_clustered_with_gt[i] = np.reshape(temp2, (5000,32*32))
             else:
-                self.image_clustered_with_gt[i] = np.reshape(temp, (5000, 32*32*3))
+                #self.image_clustered_with_gt[i] = np.reshape(temp, (5000, 32*32*3))
+                self.image_clustered_with_gt[i] = temp
 
     def cluster_test_with_ground_truth(self, hsv=False):
         self.print_number_of_elements_per_class()
@@ -1157,144 +1162,247 @@ class CifarSolver(object):
     #             print('test accuracy {}'.format(sum(accu) / 10))
 
 
-    def test_classes_with_alexnet_norm2(self):
+    # def test_classes_with_alexnet_norm2(self):
+    #
+    #     one_class_size = 5000
+    #     input_set = np.concatenate([self.image_clustered_with_gt[data] for data in range(10)], axis=0)
+    #     labels = [np.zeros((one_class_size, 10)) for i in range(10)]
+    #     for i in range(10):
+    #         labels[i][:, i] = 1
+    #     label_set = np.concatenate(labels, axis=0)
+    #
+    #     input_test = np.concatenate([self.clustered_test[data] for data in range(10)], axis=0)
+    #     label_test_list = [np.zeros((len(self.clustered_test[0]), 10)) for i in range(10)]
+    #     for i in range(10):
+    #         label_test_list[i][:, i] = 1
+    #     label_test = np.concatenate(label_test_list, axis=0)
+    #
+    #     feature_size = 1024
+    #     x = tf.placeholder(tf.float32, [None, 32 * 32 * 3], "x")
+    #     p1 = tf.placeholder(tf.float32, [None, feature_size], "p1")
+    #     p2 = tf.placeholder(tf.float32, [None, feature_size], "p2")
+    #     p3 = tf.placeholder(tf.float32, [None, feature_size], "p3")
+    #     p4 = tf.placeholder(tf.float32, [None, feature_size], "p4")
+    #     p5 = tf.placeholder(tf.float32, [None, feature_size], "p5")
+    #     p6 = tf.placeholder(tf.float32, [None, feature_size], "p6")
+    #     p7 = tf.placeholder(tf.float32, [None, feature_size], "p7")
+    #     p8 = tf.placeholder(tf.float32, [None, feature_size], "p8")
+    #     p9 = tf.placeholder(tf.float32, [None, feature_size], "p9")
+    #     p10 = tf.placeholder(tf.float32, [None, feature_size], "p10")
+    #
+    #     keep_prob = tf.placeholder(tf.float32)
+    #
+    #     _X = tf.reshape(x, shape=[-1, 32, 32, 3])
+    #
+    #     alexnet = AlexNet(_X, keep_prob, 10, "alexnet_samples/bvlc_alexnet.npy")
+    #     h_pool2_flat = alexnet.flattened
+    #     y_ = tf.placeholder(tf.float32, [None, 10])
+    #     # Define loss and optimizer
+    #
+    #     errors1 = tf.transpose(tf.transpose(h_pool2_flat) - tf.matmul(p1, tf.transpose(h_pool2_flat)))
+    #     errors2 = tf.transpose(tf.transpose(h_pool2_flat) - tf.matmul(p2, tf.transpose(h_pool2_flat)))
+    #     errors3 = tf.transpose(tf.transpose(h_pool2_flat) - tf.matmul(p3, tf.transpose(h_pool2_flat)))
+    #     errors4 = tf.transpose(tf.transpose(h_pool2_flat) - tf.matmul(p4, tf.transpose(h_pool2_flat)))
+    #     errors5 = tf.transpose(tf.transpose(h_pool2_flat) - tf.matmul(p5, tf.transpose(h_pool2_flat)))
+    #     errors6 = tf.transpose(tf.transpose(h_pool2_flat) - tf.matmul(p6, tf.transpose(h_pool2_flat)))
+    #     errors7 = tf.transpose(tf.transpose(h_pool2_flat) - tf.matmul(p7, tf.transpose(h_pool2_flat)))
+    #     errors8 = tf.transpose(tf.transpose(h_pool2_flat) - tf.matmul(p8, tf.transpose(h_pool2_flat)))
+    #     errors9 = tf.transpose(tf.transpose(h_pool2_flat) - tf.matmul(p9, tf.transpose(h_pool2_flat)))
+    #     errors10 = tf.transpose(tf.transpose(h_pool2_flat) - tf.matmul(p10, tf.transpose(h_pool2_flat)))
+    #
+    #     norm1 = tf.sqrt(tf.reduce_sum(tf.square(errors1), axis=1))
+    #     norm2 = tf.sqrt(tf.reduce_sum(tf.square(errors2), axis=1))
+    #     norm3 = tf.sqrt(tf.reduce_sum(tf.square(errors3), axis=1))
+    #     norm4 = tf.sqrt(tf.reduce_sum(tf.square(errors4), axis=1))
+    #     norm5 = tf.sqrt(tf.reduce_sum(tf.square(errors5), axis=1))
+    #     norm6 = tf.sqrt(tf.reduce_sum(tf.square(errors6), axis=1))
+    #     norm7 = tf.sqrt(tf.reduce_sum(tf.square(errors7), axis=1))
+    #     norm8 = tf.sqrt(tf.reduce_sum(tf.square(errors8), axis=1))
+    #     norm9 = tf.sqrt(tf.reduce_sum(tf.square(errors9), axis=1))
+    #     norm10 = tf.sqrt(tf.reduce_sum(tf.square(errors10), axis=1))
+    #
+    #     norm_stack = tf.stack([norm1, norm2, norm3, norm4, norm5, norm6, norm7, norm8, norm9, norm10], axis=1)
+    #
+    #     normalized = tf.abs(1 - tf.nn.l2_normalize(norm_stack, axis=1))
+    #     cross_entropy = tf.reduce_mean(tf.abs(y_ - normalized))
+    #
+    #     train_step = tf.train.GradientDescentOptimizer(10).minimize(cross_entropy)
+    #     correct_prediction = tf.equal(tf.argmax(normalized, 1), tf.argmax(y_, 1))
+    #
+    #     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+    #
+    #     dataset = tf.data.Dataset.from_tensor_slices((input_set, label_set))
+    #     dataset = dataset.repeat(150)
+    #     dataset = dataset.shuffle(buffer_size=10000)
+    #     batched_dataset = dataset.batch(50)
+    #     iterator = batched_dataset.make_initializable_iterator()
+    #     next_element = iterator.get_next()
+    #
+    #     with tf.Session() as sess:
+    #
+    #         sess.run(tf.global_variables_initializer())
+    #         sess.run(iterator.initializer)
+    #         self.logger.info("Training start with alexnet")
+    #
+    #         for m in range(0, 10000):
+    #             if m % 100 == 0:
+    #                 self.logger.info("Calculating projections")
+    #                 out1 = sess.run(h_pool2_flat,
+    #                                 feed_dict={x: self.image_clustered_with_gt[0], keep_prob: 1.0})
+    #                 out2 = sess.run(h_pool2_flat,
+    #                                 feed_dict={x: self.image_clustered_with_gt[1], keep_prob: 1.0})
+    #                 out3 = sess.run(h_pool2_flat,
+    #                                 feed_dict={x: self.image_clustered_with_gt[2], keep_prob: 1.0})
+    #                 out4 = sess.run(h_pool2_flat,
+    #                                 feed_dict={x: self.image_clustered_with_gt[3], keep_prob: 1.0})
+    #                 out5 = sess.run(h_pool2_flat,
+    #                                 feed_dict={x: self.image_clustered_with_gt[4], keep_prob: 1.0})
+    #                 out6 = sess.run(h_pool2_flat,
+    #                                 feed_dict={x: self.image_clustered_with_gt[5], keep_prob: 1.0})
+    #                 out7 = sess.run(h_pool2_flat,
+    #                                 feed_dict={x: self.image_clustered_with_gt[6], keep_prob: 1.0})
+    #                 out8 = sess.run(h_pool2_flat,
+    #                                 feed_dict={x: self.image_clustered_with_gt[7], keep_prob: 1.0})
+    #                 out9 = sess.run(h_pool2_flat,
+    #                                 feed_dict={x: self.image_clustered_with_gt[8], keep_prob: 1.0})
+    #                 out10 = sess.run(h_pool2_flat,
+    #                                  feed_dict={x: self.image_clustered_with_gt[9], keep_prob: 1.0})
+    #
+    #                 rank = 100
+    #                 pro1 = tools.calculateProjectionMatrix(out1, rank)
+    #                 pro2 = tools.calculateProjectionMatrix(out2, rank)
+    #                 pro3 = tools.calculateProjectionMatrix(out3, rank)
+    #                 pro4 = tools.calculateProjectionMatrix(out4, rank)
+    #                 pro5 = tools.calculateProjectionMatrix(out5, rank)
+    #                 pro6 = tools.calculateProjectionMatrix(out6, rank)
+    #                 pro7 = tools.calculateProjectionMatrix(out7, rank)
+    #                 pro8 = tools.calculateProjectionMatrix(out8, rank)
+    #                 pro9 = tools.calculateProjectionMatrix(out9, rank)
+    #                 pro10 = tools.calculateProjectionMatrix(out10, rank)
+    #                 self.logger.info("Projections calculated")
+    #
+    #             for _ in range(100):
+    #                 batch_xs, batch_ys = sess.run(next_element)
+    #                 # print(
+    #                 # sess.run(normalized,
+    #                 #          feed_dict={x: batch_xs, p1: pro1, p2: pro2, p3: pro3, p4: pro4, p5: pro5, p6: pro6,
+    #                 #                     p7: pro7, p8: pro8,
+    #                 #                     p9: pro9, p10: pro10, y_: batch_ys, keep_prob: 0.5})
+    #                 # )
+    #                 sess.run(train_step,
+    #                          feed_dict={x: batch_xs, p1: pro1, p2: pro2, p3: pro3, p4: pro4, p5: pro5, p6: pro6,
+    #                                     p7: pro7, p8: pro8,
+    #                                     p9: pro9, p10: pro10, y_: batch_ys, keep_prob: 0.5})
+    #             accu = []
+    #             for i in range(0, 10000, 1000):
+    #                 accu.append(accuracy.eval(feed_dict={
+    #                     x: input_test[i:i + 1000], y_: label_test[i:i + 1000], p1: pro1, p2: pro2, p3: pro3, p4: pro4,
+    #                     p5: pro5, p6: pro6, p7: pro7,
+    #                     p8: pro8,
+    #                     p9: pro9, p10: pro10, keep_prob: 1.0}))
+    #
+    #             print(accu)
+    #             print('test accuracy {}'.format(sum(accu) / 10))
 
-        one_class_size = 5000
-        input_set = np.concatenate([self.image_clustered_with_gt[data] for data in range(10)], axis=0)
-        labels = [np.zeros((one_class_size, 10)) for i in range(10)]
-        for i in range(10):
-            labels[i][:, i] = 1
-        label_set = np.concatenate(labels, axis=0)
 
-        input_test = np.concatenate([self.clustered_test[data] for data in range(10)], axis=0)
-        label_test_list = [np.zeros((len(self.clustered_test[0]), 10)) for i in range(10)]
-        for i in range(10):
-            label_test_list[i][:, i] = 1
-        label_test = np.concatenate(label_test_list, axis=0)
+    def train_alexnet(self):
 
-        feature_size = 1024
-        x = tf.placeholder(tf.float32, [None, 32 * 32 * 3], "x")
-        p1 = tf.placeholder(tf.float32, [None, feature_size], "p1")
-        p2 = tf.placeholder(tf.float32, [None, feature_size], "p2")
-        p3 = tf.placeholder(tf.float32, [None, feature_size], "p3")
-        p4 = tf.placeholder(tf.float32, [None, feature_size], "p4")
-        p5 = tf.placeholder(tf.float32, [None, feature_size], "p5")
-        p6 = tf.placeholder(tf.float32, [None, feature_size], "p6")
-        p7 = tf.placeholder(tf.float32, [None, feature_size], "p7")
-        p8 = tf.placeholder(tf.float32, [None, feature_size], "p8")
-        p9 = tf.placeholder(tf.float32, [None, feature_size], "p9")
-        p10 = tf.placeholder(tf.float32, [None, feature_size], "p10")
+        #create dataset
+        feature_size = 32
+        label_test_list = np.zeros((self.training_labels.shape[0], 10))
+        for i in range(self.training_labels.shape[0]):
+            label_test_list[i, self.training_labels[i]] = 1
 
-        keep_prob = tf.placeholder(tf.float32)
+        self.test_labels_vector = np.zeros((self.test_labels.shape[0], 10))
+        for i in range(self.test_labels.shape[0]):
+            self.test_labels_vector[i, self.test_labels[i]] = 1
 
-        _X = tf.reshape(x, shape=[-1, 32, 32, 3])
-
-        alexnet = AlexNet(_X, keep_prob, 10, "alexnet_samples/bvlc_alexnet.npy")
-        h_pool2_flat = alexnet.flattened
-        y_ = tf.placeholder(tf.float32, [None, 10])
-        # Define loss and optimizer
-
-        errors1 = tf.transpose(tf.transpose(h_pool2_flat) - tf.matmul(p1, tf.transpose(h_pool2_flat)))
-        errors2 = tf.transpose(tf.transpose(h_pool2_flat) - tf.matmul(p2, tf.transpose(h_pool2_flat)))
-        errors3 = tf.transpose(tf.transpose(h_pool2_flat) - tf.matmul(p3, tf.transpose(h_pool2_flat)))
-        errors4 = tf.transpose(tf.transpose(h_pool2_flat) - tf.matmul(p4, tf.transpose(h_pool2_flat)))
-        errors5 = tf.transpose(tf.transpose(h_pool2_flat) - tf.matmul(p5, tf.transpose(h_pool2_flat)))
-        errors6 = tf.transpose(tf.transpose(h_pool2_flat) - tf.matmul(p6, tf.transpose(h_pool2_flat)))
-        errors7 = tf.transpose(tf.transpose(h_pool2_flat) - tf.matmul(p7, tf.transpose(h_pool2_flat)))
-        errors8 = tf.transpose(tf.transpose(h_pool2_flat) - tf.matmul(p8, tf.transpose(h_pool2_flat)))
-        errors9 = tf.transpose(tf.transpose(h_pool2_flat) - tf.matmul(p9, tf.transpose(h_pool2_flat)))
-        errors10 = tf.transpose(tf.transpose(h_pool2_flat) - tf.matmul(p10, tf.transpose(h_pool2_flat)))
-
-        norm1 = tf.sqrt(tf.reduce_sum(tf.square(errors1), axis=1))
-        norm2 = tf.sqrt(tf.reduce_sum(tf.square(errors2), axis=1))
-        norm3 = tf.sqrt(tf.reduce_sum(tf.square(errors3), axis=1))
-        norm4 = tf.sqrt(tf.reduce_sum(tf.square(errors4), axis=1))
-        norm5 = tf.sqrt(tf.reduce_sum(tf.square(errors5), axis=1))
-        norm6 = tf.sqrt(tf.reduce_sum(tf.square(errors6), axis=1))
-        norm7 = tf.sqrt(tf.reduce_sum(tf.square(errors7), axis=1))
-        norm8 = tf.sqrt(tf.reduce_sum(tf.square(errors8), axis=1))
-        norm9 = tf.sqrt(tf.reduce_sum(tf.square(errors9), axis=1))
-        norm10 = tf.sqrt(tf.reduce_sum(tf.square(errors10), axis=1))
-
-        norm_stack = tf.stack([norm1, norm2, norm3, norm4, norm5, norm6, norm7, norm8, norm9, norm10], axis=1)
-
-        normalized = tf.abs(1 - tf.nn.l2_normalize(norm_stack, axis=1))
-        cross_entropy = tf.reduce_mean(tf.abs(y_ - normalized))
-
-        train_step = tf.train.GradientDescentOptimizer(10).minimize(cross_entropy)
-        correct_prediction = tf.equal(tf.argmax(normalized, 1), tf.argmax(y_, 1))
-
-        accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-
-        dataset = tf.data.Dataset.from_tensor_slices((input_set, label_set))
-        dataset = dataset.repeat(150)
+        dataset = tf.data.Dataset.from_tensor_slices((self.training_images, label_test_list))
+        dataset = dataset.repeat(2000)
         dataset = dataset.shuffle(buffer_size=10000)
         batched_dataset = dataset.batch(50)
         iterator = batched_dataset.make_initializable_iterator()
         next_element = iterator.get_next()
 
-        with tf.Session() as sess:
+        # create model
+        n_classes = 10
 
+        alex_weights = {
+            'wc1': tf.Variable(tf.random_normal([3, 3, 3, 32])),
+            'wc2': tf.Variable(tf.random_normal([3, 3, 32,32])),
+            'wc3': tf.Variable(tf.random_normal([3, 3, 32, feature_size])),
+            'wd1': tf.Variable(tf.random_normal([feature_size, feature_size])),
+            'wd2': tf.Variable(tf.random_normal([feature_size, feature_size])),
+            'out': tf.Variable(tf.random_normal([feature_size, n_classes]))
+        }
+
+        alex_biases = {
+            'bc1': tf.Variable(tf.random_normal([32])),
+            'bc2': tf.Variable(tf.random_normal([32])),
+            'bc3': tf.Variable(tf.random_normal([feature_size])),
+            'bd1': tf.Variable(tf.random_normal([feature_size])),
+            'bd2': tf.Variable(tf.random_normal([feature_size])),
+            'out': tf.Variable(tf.random_normal([n_classes]))
+        }
+
+        x = tf.placeholder(tf.float32, [None, 32,32,3], "x")
+        y = tf.placeholder(tf.float32, [None, n_classes])
+        keep_prob = tf.placeholder(tf.float32)
+
+        [model, features] = alex_net(x, alex_weights, alex_biases, keep_prob)
+
+        #mid training
+        flat_features = tf.reshape(features, [-1, feature_size])
+
+        m1, m2 = tf.split(flat_features, 2)
+        s1, u1, v1 = tf.svd(tf.transpose(tf.reshape(m1, [feature_size, feature_size])), full_matrices=True, compute_uv=True,
+                            name="svd")
+        s2, u2, v2 = tf.svd(tf.transpose(tf.reshape(m2, [feature_size, feature_size])), full_matrices=True, compute_uv=True,
+                            name="svd2")
+
+        p_diag = tf.diag_part(tf.matmul(tf.transpose(u1), u2))
+
+        angles = feature_size - tf.reduce_sum(tf.square(tf.sin(tf.acos(tf.minimum(1.0,p_diag)))))
+        train_angles = tf.train.GradientDescentOptimizer(1e-4).minimize(angles)
+
+
+        cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=model, labels=y))
+        #optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
+        optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost, var_list=[alex_weights['wd1'],
+                                                                                        alex_weights['wd2'],
+                                                                                        alex_weights['out'],
+                                                                                        alex_biases['bd1'],
+                                                                                        alex_biases['bd2'],
+                                                                                        alex_biases['out']])
+        #Evaluate model
+        correct_pred = tf.equal(tf.argmax(model,1), tf.argmax(y,1))
+        accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+
+        #train model
+
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+
+        with tf.Session(config=config) as sess:
+            print("start training")
             sess.run(tf.global_variables_initializer())
             sess.run(iterator.initializer)
-            self.logger.info("Training start with alexnet")
 
-            for m in range(0, 10000):
-                if m % 100 == 0:
-                    self.logger.info("Calculating projections")
-                    out1 = sess.run(h_pool2_flat,
-                                    feed_dict={x: self.image_clustered_with_gt[0], keep_prob: 1.0})
-                    out2 = sess.run(h_pool2_flat,
-                                    feed_dict={x: self.image_clustered_with_gt[1], keep_prob: 1.0})
-                    out3 = sess.run(h_pool2_flat,
-                                    feed_dict={x: self.image_clustered_with_gt[2], keep_prob: 1.0})
-                    out4 = sess.run(h_pool2_flat,
-                                    feed_dict={x: self.image_clustered_with_gt[3], keep_prob: 1.0})
-                    out5 = sess.run(h_pool2_flat,
-                                    feed_dict={x: self.image_clustered_with_gt[4], keep_prob: 1.0})
-                    out6 = sess.run(h_pool2_flat,
-                                    feed_dict={x: self.image_clustered_with_gt[5], keep_prob: 1.0})
-                    out7 = sess.run(h_pool2_flat,
-                                    feed_dict={x: self.image_clustered_with_gt[6], keep_prob: 1.0})
-                    out8 = sess.run(h_pool2_flat,
-                                    feed_dict={x: self.image_clustered_with_gt[7], keep_prob: 1.0})
-                    out9 = sess.run(h_pool2_flat,
-                                    feed_dict={x: self.image_clustered_with_gt[8], keep_prob: 1.0})
-                    out10 = sess.run(h_pool2_flat,
-                                     feed_dict={x: self.image_clustered_with_gt[9], keep_prob: 1.0})
+            for j in range(1,10):
+                print("j: ", j)
+                for i in range(1000):
+                    sess.run(train_angles, feed_dict={
+                        x: np.concatenate((self.image_clustered_with_gt[0][0:feature_size], self.image_clustered_with_gt[j][0:feature_size])),
+                        keep_prob: 1.0})
+                    angle_values = sess.run(angles, feed_dict={x: np.concatenate((self.image_clustered_with_gt[0][0:feature_size], self.image_clustered_with_gt[j][0:feature_size])), keep_prob:1.0})
 
-                    rank = 100
-                    pro1 = tools.calculateProjectionMatrix(out1, rank)
-                    pro2 = tools.calculateProjectionMatrix(out2, rank)
-                    pro3 = tools.calculateProjectionMatrix(out3, rank)
-                    pro4 = tools.calculateProjectionMatrix(out4, rank)
-                    pro5 = tools.calculateProjectionMatrix(out5, rank)
-                    pro6 = tools.calculateProjectionMatrix(out6, rank)
-                    pro7 = tools.calculateProjectionMatrix(out7, rank)
-                    pro8 = tools.calculateProjectionMatrix(out8, rank)
-                    pro9 = tools.calculateProjectionMatrix(out9, rank)
-                    pro10 = tools.calculateProjectionMatrix(out10, rank)
-                    self.logger.info("Projections calculated")
+                    print(angle_values)
 
-                for _ in range(100):
+            for i in range(500):
+                for _ in range(1000):
                     batch_xs, batch_ys = sess.run(next_element)
-                    # print(
-                    # sess.run(normalized,
-                    #          feed_dict={x: batch_xs, p1: pro1, p2: pro2, p3: pro3, p4: pro4, p5: pro5, p6: pro6,
-                    #                     p7: pro7, p8: pro8,
-                    #                     p9: pro9, p10: pro10, y_: batch_ys, keep_prob: 0.5})
-                    # )
-                    sess.run(train_step,
-                             feed_dict={x: batch_xs, p1: pro1, p2: pro2, p3: pro3, p4: pro4, p5: pro5, p6: pro6,
-                                        p7: pro7, p8: pro8,
-                                        p9: pro9, p10: pro10, y_: batch_ys, keep_prob: 0.5})
-                accu = []
-                for i in range(0, 10000, 1000):
-                    accu.append(accuracy.eval(feed_dict={
-                        x: input_test[i:i + 1000], y_: label_test[i:i + 1000], p1: pro1, p2: pro2, p3: pro3, p4: pro4,
-                        p5: pro5, p6: pro6, p7: pro7,
-                        p8: pro8,
-                        p9: pro9, p10: pro10, keep_prob: 1.0}))
-
-                print(accu)
-                print('test accuracy {}'.format(sum(accu) / 10))
+                    sess.run(optimizer, feed_dict={x: batch_xs, y: batch_ys, keep_prob:1.0})
+                print(i)
+                if i%10==0:
+                    accu = sess.run(accuracy, feed_dict={x:self.test_images[0:1000], y:self.test_labels_vector[0:1000], keep_prob:1.0})
+                    print(accu)

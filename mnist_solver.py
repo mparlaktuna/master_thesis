@@ -414,19 +414,17 @@ class MnistSolver():
         y_ = tf.placeholder(tf.float32, [None, 2])
 
         cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=y_, logits=y_conv))
-        tf_training_model = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+        tf_training_model = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy, var_list=[W_fc1, b_fc1, W_fc2, b_fc2])
 
         tf_test_model = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
         tf_accuracy_model = tf.reduce_mean(tf.cast(tf_test_model, tf.float32))
 
-        index1 = 2
-        index2 = 8
         first_index = 2
         second_index = 8
         first_input = self.image_clustered_with_gt[first_index]
         second_input = self.image_clustered_with_gt[second_index]
-        first_test = self.clustered_test[index1]
-        second_test = self.clustered_test[index2]
+        first_test = self.clustered_test[first_index]
+        second_test = self.clustered_test[second_index]
         input_set = np.concatenate((first_input, second_input), axis=0)
         first_label = np.stack((np.ones(len(first_input)), np.zeros(len(first_input))), axis=1)
         second_label = np.stack((np.zeros(len(second_input)), np.ones(len(second_input))), axis=1)
@@ -449,26 +447,25 @@ class MnistSolver():
             sess.run(tf.global_variables_initializer())
             sess.run(iterator.initializer)
 
-            for m in range(1, 200000):
-                for _ in range(40):
-                    batch_xs, batch_ys = sess.run(next_element)
 
-                    out1_val = sess.run([train_angles, angles], feed_dict={x: np.concatenate([self.image_clustered_with_gt[0][0:490], self.image_clustered_with_gt[1][0:490]])})
-                    #out2_val = sess.run(out1, feed_dict={x: })
+            for j in range(300):
+                out1_val = sess.run([train_angles, angles], feed_dict={x: np.concatenate(
+                    [self.image_clustered_with_gt[2][10*j:10*j+490], self.image_clustered_with_gt[8][10*j:10*j+490]])})
+
+                if j%10==0:
                     print(out1_val)
-                    # angles = sess.run(u2, feed_dict={m1:out1_val, m2: out2_val})
-                    # #
-                    # print(angles.shape)
-                    # print(u2_values.shape)
-                    # for i in range(0, 10):
-                    print("traing start")
-                    # sess.run(train_angles,
-                    #          feed_dict={x: self.image_clustered_with_gt[0][0:3136],
-                    #                     x2: self.image_clustered_with_gt[1][0:3136]})
-                    # angle_values = sess.run([train_angles, angles],
-                    #                         feed_dict={x: self.image_clustered_with_gt[0][0:3136],
-                    #                                    x2: self.image_clustered_with_gt[1][0:3136]})
-                    # print(angle_values)
+            print("conv training finished")
+
+            for i in range(5000):
+
+                batch_xs, batch_ys = sess.run(next_element)
+
+                sess.run(tf_training_model, feed_dict={x: batch_xs, y_: batch_ys, keep_prob:1.0})
+                if i%100==0:
+                    accuracy = sess.run(tf_accuracy_model, feed_dict={x: input_test, y_: label_test, keep_prob:1.0})
+                    print(accuracy)
+                    print(i)
+
 
                     # print(batch_ys)
                     # print(sess.run(normalized, feed_dict={x: batch_xs, p1: pro1, p2: pro2, y_: batch_ys, keep_prob: 0.5}))
