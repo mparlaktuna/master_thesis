@@ -1816,9 +1816,9 @@ class EmnistSolver(object):
             "w7": tf.Variable(tf.random_normal([1, 1, 256, 10])),
         }
         fcc_weights = {
-        'W_fc1' : weight_variable([7 * 7 * 10, 1024]),
-        'b_fc1' : bias_variable([1024]),
-        'W_fc2' : weight_variable([1024, 10]),
+        'W_fc1' : weight_variable([7 * 7 * 10, 256]),
+        'b_fc1' : bias_variable([256]),
+        'W_fc2' : weight_variable([256, 10]),
         'b_fc2' : bias_variable([10])
         }
 
@@ -1836,10 +1836,10 @@ class EmnistSolver(object):
         cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=y_, logits=y_conv))
 
         #regular training
-        #tf_training_model = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+        tf_training_model = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
 
         #only fcc training
-        tf_training_model = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy, var_list=[fcc_weights["W_fc1"], fcc_weights["b_fc1"], fcc_weights["W_fc2"], fcc_weights["b_fc2"]])
+        #tf_training_model = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy, var_list=[fcc_weights["W_fc1"], fcc_weights["b_fc1"], fcc_weights["W_fc2"], fcc_weights["b_fc2"]])
 
         tf_test_model = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
         tf_accuracy_model = tf.reduce_mean(tf.cast(tf_test_model, tf.float32))
@@ -1896,31 +1896,29 @@ class EmnistSolver(object):
             sess.run(iterator.initializer)
             self.logger.info("Training start")
 
+            index_list = [0, 490, 980, 1470, 1960]
+
             #train conv network
-            for n in [1,2,1,3,1,2,4,1,2]:
-                k = 0
-
-                for m in range(10):
-                    first_index = 0
-                    # first_index = randint(0, 10)
-                    #
-                    # second_index = randint(0, 10)
-                    # while second_index == first_index:
-                    #     second_index = randint(0, 10)
-                    #
-                    second_index = n
-                    index_list = [0,490,980,1470,1960]
-                    sess.run(train_angles, feed_dict={x: np.concatenate((self.image_clustered_with_gt[number_to_class[first_index]][index_list[k]:index_list[k+1]],
-                                                                                 self.image_clustered_with_gt[
-                                                                                     number_to_class[second_index]][index_list[k]:index_list[k+1]]))})
-                    angle_value = sess.run(angles, feed_dict={x: np.concatenate((self.image_clustered_with_gt[number_to_class[first_index]][index_list[k]:index_list[k+1]],
-                                                                                 self.image_clustered_with_gt[
-                                                                                     number_to_class[second_index]][index_list[k]:index_list[k+1]]))})
-                    k += 1
-                    if k==4:
-                        k=0
-
-                    print("epoch {}, first index: {}, second index: {}, angle: {}".format(m, first_index, second_index, angle_value))
+            # for _ in range(2):
+            #     for first_index in range(10):
+            #         for second_index in range(first_index+1, 10):
+            #             mean_angle = 1.0
+            #             m = 0
+            #             while mean_angle>0.5:
+            #                 angle_value = 0
+            #
+            #                 for k in range(4):
+            #                     angle_value += sess.run([angles,train_angles], feed_dict={x: np.concatenate((self.image_clustered_with_gt[number_to_class[first_index]][index_list[k]:index_list[k+1]],
+            #                                                                              self.image_clustered_with_gt[
+            #                                                                                  number_to_class[second_index]][index_list[k]:index_list[k+1]]))})[0]
+            #
+            #                     # angle_value += sess.run(, feed_dict={x: np.concatenate((self.image_clustered_with_gt[number_to_class[first_index]][index_list[k]:index_list[k+1]],
+            #                     #                                                          self.image_clustered_with_gt[
+            #                     #                                                              number_to_class[second_index]][index_list[k]:index_list[k+1]]))})
+            #
+            #                 mean_angle = angle_value/5.0;
+            #                 m += 1
+            #                 print("epoch {}, first index: {}, second index: {}, mean angle: {}".format(m, first_index, second_index, mean_angle))
 
             for m in range(1, 200):
                 for _ in range(400):
