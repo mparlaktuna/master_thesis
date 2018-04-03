@@ -97,8 +97,8 @@ def calculateAngleBetweenSvds(M1, rank=10):
         m2_u, s, v = svds(np.transpose(M1.astype(float)), k=rank)
 
     P = np.matmul(np.transpose(m1_u), m2_u)
-    p_diag = np.diag(P)
-    angles = np.sin(np.arccos(p_diag))
+    s = linalg.svd(P)
+    angles = np.sin(np.arccos(s))
     return angles
 
 def calculateAnglesAfterSvd(m1_u, m2_u):

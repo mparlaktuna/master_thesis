@@ -4,6 +4,8 @@ from data_loader import DataLoader
 import numpy as np
 import tools
 from alexnet_samples.alexnet2 import *
+from scipy.sparse.linalg import svds
+
 #from alexnet_samples.alexnet import *
 
 class CifarSolver(object):
@@ -31,12 +33,16 @@ class CifarSolver(object):
         self.training_images, self.training_labels = self.dataLoader.getTrainingData(size)
         # for i in range(len(self.training_images)):
         #     self.training_images[i] = self.training_images[i] /255.0
+        self.training_images = self.training_images/255.0
+        #self.training_images -= np.repeat(np.reshape(np.mean(self.training_images, axis=1), [50000,1]), 784, axis=1)
         self.logger.info("Using {} training images".format(len(self.training_images)))
 
     def loadTestData(self, size=None):
         self.test_images, self.test_labels = self.dataLoader.getTestData(size)
         # for i in range(len(self.test_images)):
         #     self.test_images[i] = self.test_images[i] / 255.0
+        self.test_images = self.test_images/255.0
+        #self.test_images -= np.repeat(np.reshape(np.mean(self.test_images, axis=1), [10000,1]), , axis=1)
         self.logger.info("Using {} test images".format(len(self.test_images)))
 
     def test_images_vectorize(self, hsv=False):
@@ -1308,7 +1314,7 @@ class CifarSolver(object):
     def train_alexnet(self):
 
         #create dataset
-        feature_size = 32
+        feature_size = 1024
         label_test_list = np.zeros((self.training_labels.shape[0], 10))
         for i in range(self.training_labels.shape[0]):
             label_test_list[i, self.training_labels[i]] = 1
@@ -1350,7 +1356,7 @@ class CifarSolver(object):
         keep_prob = tf.placeholder(tf.float32)
 
         [model, features] = alex_net(x, alex_weights, alex_biases, keep_prob)
-
+        print(features.shape)
         #mid training
         flat_features = tf.reshape(features, [-1, feature_size])
 
@@ -1360,11 +1366,12 @@ class CifarSolver(object):
         s2, u2, v2 = tf.svd(tf.transpose(tf.reshape(m2, [feature_size, feature_size])), full_matrices=True, compute_uv=True,
                             name="svd2")
 
-        p_diag = tf.diag_part(tf.matmul(tf.transpose(u1), u2))
+        s = tf.svd(tf.reshape(tf.matmul(m1,m2, transpose_b=True), [feature_size, feature_size]), full_matrices=True, compute_uv=False, name="svd3")
 
-        angles = feature_size - tf.reduce_sum(tf.square(tf.sin(tf.acos(tf.minimum(1.0,p_diag)))))
+        #p_diag = tf.diag_part(tf.matmul(tf.transpose(u1), u2))
+        acos = tf.acos(tf.minimum(1.0, s))
+        angles = tf.sqrt(tf.reduce_sum(tf.square(tf.sin(acos))))
         train_angles = tf.train.GradientDescentOptimizer(1e-4).minimize(angles)
-
 
         cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=model, labels=y))
         #optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
@@ -1390,14 +1397,16 @@ class CifarSolver(object):
 
             for j in range(1,10):
                 print("j: ", j)
-                for i in range(1000):
+                angle_val = 1.0
+                while angle_val>0.0001:
                     sess.run(train_angles, feed_dict={
                         x: np.concatenate((self.image_clustered_with_gt[0][0:feature_size], self.image_clustered_with_gt[j][0:feature_size])),
                         keep_prob: 1.0})
-                    angle_values = sess.run(angles, feed_dict={x: np.concatenate((self.image_clustered_with_gt[0][0:feature_size], self.image_clustered_with_gt[j][0:feature_size])), keep_prob:1.0})
+                    angle_val = sess.run(angles, feed_dict={x: np.concatenate((self.image_clustered_with_gt[0][0:feature_size], self.image_clustered_with_gt[j][0:feature_size])), keep_prob:1.0})
 
-                    print(angle_values)
+                    print(angle_val)
 
+            #
             for i in range(500):
                 for _ in range(1000):
                     batch_xs, batch_ys = sess.run(next_element)
