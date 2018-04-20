@@ -1834,12 +1834,24 @@ class EmnistSolver(object):
         feature_size = 490
         self.logger.info("Creating tf training model with angle separation")
         x = tf.placeholder(tf.float32, [None, 784], "x")
+
+        #
+        # x input to the network 
+        # y is the truth 
+        # o_u is the Q from outside or previous set
+        #  
+
         keep_prob = tf.placeholder(tf.float32)
         y_ = tf.placeholder(tf.float32, [None, 10])
         o_u = tf.placeholder(tf.float32, [feature_size, feature_size])
 
         [y_conv, features] = deeplda_mnist.lda_create_network(x, weights, fcc_weights, keep_prob)
 
+        #
+        # Creates the lda network 
+        # Features is the fewatures layer 
+        # y_conv is the entire network with the fcc
+        #  
 
         # #regular training
         cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(labels=y_, logits=y_conv))
@@ -1866,27 +1878,37 @@ class EmnistSolver(object):
                          compute_uv=True,
                          name="svd2")
 
-        b_s1 = tf.nn.top_k(s1, 20)
-        kth_s1 = tf.reduce_min(b_s1.values)
-        top2_s1 = tf.greater_equal(s1, kth_s1)
-        s1_rec = tf.where(top2_s1, s1, tf.zeros(feature_size))
+        #b_s1 = tf.nn.top_k(s1, 20)
+        #kth_s1 = tf.reduce_min(b_s1.values)
+        #top2_s1 = tf.greater_equal(s1, kth_s1)
+        #s1_rec = tf.where(top2_s1, s1, tf.zeros(feature_size))
 
-        b_s2 = tf.nn.top_k(s2, 20)
-        kth_s2 = tf.reduce_min(b_s2.values)
-        top2_s2 = tf.greater_equal(s2, kth_s2)
-        s2_rec = tf.where(top2_s2, s2, tf.zeros(feature_size))
+        #b_s2 = tf.nn.top_k(s2, 20)
+        #kth_s2 = tf.reduce_min(b_s2.values)
+        #top2_s2 = tf.greater_equal(s2, kth_s2)
+        #s2_rec = tf.where(top2_s2, s2, tf.zeros(feature_size))
 
-        m0_rec = tf.matmul(tf.matmul(u1, tf.diag(s1_rec)), tf.transpose(v1))
-        m1_rec = tf.matmul(tf.matmul(u2, tf.diag(s2_rec)), tf.transpose(v2))
-        m0_norm = tf.nn.l2_normalize(m0_rec)
-        m1_norm = tf.nn.l2_normalize(m1_rec)
+        #rank approximation code for each one get r1 and r2
+        r1 = 100
+        r2 = 100
+
+        q1 = u1[:,0:r1]
+        q2 = u2[:,0:r2]
+
+        A = tf.matmul(q1, q2, transpose_a=True)
+
+
+        #m0_rec = tf.matmul(tf.matmul(u1, tf.diag(s1_rec)), tf.transpose(v1))
+        #m1_rec = tf.matmul(tf.matmul(u2, tf.diag(s2_rec)), tf.transpose(v2))
+        #m0_norm = tf.nn.l2_normalize(m0_rec)
+        #m1_norm = tf.nn.l2_normalize(m1_rec)
 
         # p_diag = tf.diag_part(tf.matmul(tf.transpose(u1), u2))
         # angles = feature_size - tf.reduce_sum(tf.sqrt(tf.square(tf.sin(tf.acos(p_diag)))))
-        a = tf.matmul(tf.transpose(m0_norm), m1_norm)
+        # a = tf.matmul(tf.transpose(m0_norm), m1_norm)
         #a_norm = tf.nn.l2_normalize(a)
 
-        s = tf.svd(tf.reshape(a,[feature_size, feature_size]), full_matrices=True, compute_uv=False, name="svd3")
+        s = tf.svd(tf.reshape(A,[feature_size, feature_size]), full_matrices=True, compute_uv=False, name="svd3")
         #angles = tf.reduce_sum(tf.sqrt(tf.square(tf.sin(tf.acos(s)))))
         #acos = tf.acos(tf.minimum(1.0,s))
         #acos_nonan = tf.where(tf.is_nan(acos_value), tf.zeros(acos_value.shape), acos_value)
@@ -1895,6 +1917,7 @@ class EmnistSolver(object):
 
         train_angles = tf.train.GradientDescentOptimizer(1).minimize(angles)
 
+        # image_clustered_with_gt class imputs are classified
         input_set = np.concatenate([self.image_clustered_with_gt[number_to_class[data]] for data in range(10)], axis=0)
         labels = [np.zeros((2400, 10)) for i in range(10)]
         for i in range(10):
