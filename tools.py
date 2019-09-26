@@ -116,6 +116,10 @@ def max_pool_2x2(x):
     return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
                           strides=[1, 2, 2, 1], padding='SAME')
 
+def max_pool(x):
+    return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
+                          strides=[1, 2, 2, 1], padding='SAME')
+
 def weight_variable(shape, name=None):
     initial = tf.truncated_normal(shape, stddev=0.1)
     return tf.Variable(initial, name=name)

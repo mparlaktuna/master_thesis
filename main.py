@@ -5,6 +5,8 @@ from data_loader import DataLoader
 from mnist_solver import MnistSolver
 from cifar_solver import CifarSolver
 from emnist_solver import EmnistSolver
+import tensorflow as tf
+
 
 
 def main():
@@ -12,7 +14,7 @@ def main():
     Mustafa Parlaktuna, mparlaktuna@gmail.com
     :return:
     """
-    subproject_name = "emnist"
+    subproject_name = "cifar10"
     run_description = "running tensorflow angle tests"
     log_file_name = datetime.now().strftime('%H:%M:%S-%d-%m-%Y') + ".log"
     createLoggers(log_file_name)
@@ -20,50 +22,35 @@ def main():
         with open(log_history_file, 'a') as f:
             f.write(subproject_name + "\t" + run_description + "\t" + log_file_name + "\n")
 
-    logger = logging.getLogger('logger_master')
-    logger.info("Starting Subproject " + subproject_name)
-
 
     try:
-        #mnist test
-        # mnist = MnistSolver()
-        # mnist.loadTrainingData()
-        # mnist.loadTestData()
-        # mnist.cluster_training_with_gound_truth()
-        # mnist.cluster_test_with_ground_truth()
-        # mnist.train_lda_with_mid_angle_separation()
-        # #mnist.test_with_norm_only()
-        # mnist.test_classes_with_tf_norm()
+        logger = logging.getLogger('logger_master')
+        logger.info("Starting Subproject " + subproject_name)
+        if subproject_name == "mnist":
+            mnist = MnistSolver()
+            mnist.loadTrainingData()
+            mnist.loadTestData()
+            mnist.cluster_training_with_gound_truth()
+            mnist.cluster_test_with_ground_truth()
+            mnist.train("layer_norm")
+            #mnist.train_fcn("conv2")
 
-        # cifar = CifarSolver()
-        # cifar.loadTrainingData()
-        # cifar.loadTestData()
-        # cifar.test_images_vectorize()
-        # cifar.cluster_training_with_ground_truth()
-        # cifar.cluster_test_with_ground_truth()
-        # cifar.train_alexnet()
-        # # cifar.test_two_classes_with_tf_norm_separate()
-        # #cifar.test_two_classes_with_alexnet_norm()
-        # #cifar.test_classes_with_alexnet_norm()
-        # cifar.test_classes_with_alexnet_norm2()
+        elif subproject_name == "emnist":
+            emnist = EmnistSolver("emnist_balanced")
+            emnist.load_training_data()
+            emnist.load_test_data()
+            emnist.cluster_training_with_gound_truth()
+            emnist.cluster_test_with_ground_truth()
+            emnist.train_one_norm()
 
-        #emnist run
-        emnist = EmnistSolver("emnist_balanced")
-        emnist.load_training_data()
-        emnist.load_test_data()
-        emnist.cluster_training_with_gound_truth()
-        emnist.cluster_test_with_ground_truth()
-        emnist.train_save_lda()
-        #emnist.train_lda_norm()
-        # emnist.train_tf_with_mid_angle_separation()
-        # emnist.test_classes_with_tf_norm_separate2()
-        #emnist.test_two_classes_with_separate_norm()
-        # emnist.test_classes_with_tf_norm_trials()
-
-        # emnist.test_two_classes_with_tf_norm()
-        #emnist.test_classes_with_tf_norm()
-        # emnist.test_classes_with_alexnet_norm()
-        # emnist.calculate_angle_between_feature_vector_svd()
+        elif subproject_name == "cifar10":
+            cifar = CifarSolver()
+            cifar.loadTrainingData()
+            cifar.loadTestData()
+            cifar.test_images_vectorize()
+            cifar.cluster_training_with_ground_truth()
+            cifar.cluster_test_with_ground_truth()
+            cifar.train("conv")
 
     except KeyError:
         logger.debug("Unable to load dataset")
@@ -79,36 +66,3 @@ def main():
 if __name__ == '__main__':
     main()
 
-
-"""
-some trial code below for future usage
-# cifar10 = CifarSolver()
-# cifar10.load_training_data()
-# cifar10.print_number_of_elements_per_class()
-# cifar10.printImageSizes()
-
-#mnist samples
-# mnist = MnistSolver("mnist_pickle")
-# mnist.load_training_data()
-#
-# mnist.load_test_data()
-# mnist.testWithNormOnly()
-
-#save outside dataset
-#dataLoader.saveDataSet("mnist_clustered", mnist.clustered, "mnist")
-
-#plot all data
-#plotSvd(mnist.clustered[1])
-
-#get angles
-#angle = calculateSubspaceAngles(mnist.training_images, mnist.test_images)
-#logger.debug("Angles between: {}".format(angle))
-
-#dataLoader.loadData("mnist_modified")
-#dataLoader.saveDataSet("mnist_modified")
-#images, labels = dataLoader.getTrainingData(20000)  
-
-dataLoader.loadData("emnist", "emnist-byclass.mat")
-dataLoader.saveDataSet("emnist_byclass")
-  
-"""
